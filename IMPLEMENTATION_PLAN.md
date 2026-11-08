@@ -184,26 +184,26 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Cumplir el requisito central: un único comando de terminal que valide, compile, migre, publique y verifique con rollback ante fallos.
 
 ### Tareas
-* [ ] Crear el script ejecutable `deploy.sh` en la raíz del proyecto.
-* [ ] Configurar directivas estrictas: `set -euo pipefail`.
-* [ ] Implementar función de Rollback:
-  * Captura del commit o estado previo: `PREV_COMMIT=$(git rev-parse HEAD)`.
-  * Registro de trampa de error: `trap 'rollback' ERR`.
-  * Función `rollback()`: revierte el código/despliegue al estado estable previo, emite reporte del fallo y finaliza con `exit 1`.
-* [ ] Implementar las 5 etapas obligatorias del reto:
-  1. **Pre-flight Check:** Verificar binarios (`node`, `npm`, `git`, `curl`) y presencia de variables requeridas en `.env` (incluyendo `API_KEY` y `VITE_API_KEY`).
-  2. **Pruebas Automatizadas:** Ejecutar `npm test` en backend antes de compilar.
-  3. **Build:** Compilación de backend (`npm run build`) y compilación de frontend con inyección de `VITE_API_URL` y `VITE_API_KEY` (`npm run build`).
-  4. **Migraciones:** Ejecutar `npx prisma migrate deploy` contra la base de datos de destino.
-  5. **Publicación:**
-     * Despliegue de backend en Railway / VPS.
-     * Despliegue de frontend compilado en Cloudflare Pages (`wrangler pages deploy`).
-  6. **Smoke Test y Health Check:**
-     * Petición cURL a `GET /health` del backend esperando HTTP 200 y `status: "healthy"` (público).
-     * Petición cURL a `GET /api/equipos` con cabecera `x-api-key: $API_KEY` esperando HTTP 200 (protegido).
-     * Petición cURL al frontend de Cloudflare Pages esperando HTTP 200.
-* [ ] Probar idempotencia: ejecutar el script dos veces consecutivas y verificar que concluya con éxito sin romper nada.
-* [ ] Sugerir al usuario el mensaje de commit en español tras completar la fase.
+* [x] Crear el script ejecutable `deploy.sh` en la raíz del proyecto.
+* [x] Crear archivo `Makefile` con atajo `make deploy`.
+* [x] Configurar directivas estrictas: `set -euo pipefail`.
+* [x] Implementar función de Rollback:
+  * [x] Captura del commit o estado previo: `PREV_COMMIT=$(git rev-parse HEAD)`.
+  * [x] Registro de trampa de error: `trap 'rollback' ERR INT TERM`.
+  * [x] Función `rollback()`: revierte el código/despliegue al estado estable previo, protege el entorno de producción contra estados inestables y finaliza con `exit 1`.
+* [x] Implementar las etapas del reto:
+  1. [x] **Pre-flight Check:** Verificar binarios (`node`, `npm`, `git`, `curl`, `docker`), estado activo del daemon Docker y presencia de variables requeridas en `.env` (incluyendo `API_KEY` y `VITE_API_KEY`).
+  2. [x] **Pruebas Automatizadas:** Ejecutar `npm test` en backend antes de compilar (28 pruebas con Vitest).
+  3. [x] **Build:** Compilación y construcción multi-stage de imágenes Docker para backend y frontend con inyección de variables.
+  4. [x] **Migraciones:** Ejecutar `npx prisma migrate deploy` contra la base de datos MySQL con espera activa de healthcheck.
+  5. [x] **Publicación:** Lanzamiento coordinado de contenedores (`db`, `backend`, `frontend`) con reinicio y healthchecks activos.
+  6. [x] **Smoke Test y Health Check:**
+     * [x] Petición cURL a `GET /health` del backend esperando HTTP 200 y `status: "healthy"`.
+     * [x] Petición cURL a `GET /api/equipos` con cabecera `x-api-key: $API_KEY` esperando HTTP 200.
+     * [x] Petición cURL a `GET /api/equipos` sin cabecera verificando la respuesta de seguridad HTTP 401.
+     * [x] Petición cURL al frontend Web Nginx esperando HTTP 200.
+* [x] Probar idempotencia: script ejecutado dos veces consecutivas concluyendo con éxito sin romper nada.
+* [x] Sugerir al usuario el mensaje de commit en español tras completar la fase.
 
 ### Criterio de Verificación
 * Ejecutar `./deploy.sh` completa todos los pasos y finaliza con mensaje de éxito y código de salida 0.
