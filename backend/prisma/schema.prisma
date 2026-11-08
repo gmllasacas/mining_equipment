@@ -1,0 +1,42 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TipoEquipo {
+  camion
+  excavadora
+  perforadora
+}
+
+model Equipo {
+  id                            Int             @id @default(autoincrement())
+  codigo                        String          @unique @db.VarChar(50)
+  tipo                          TipoEquipo
+  horometro                     Decimal         @default(0.00) @db.Decimal(10, 2)
+  horometroUltimoMantenimiento  Decimal         @default(0.00) @map("horometro_ultimo_mantenimiento") @db.Decimal(10, 2)
+  createdAt                     DateTime        @default(now()) @map("created_at")
+  updatedAt                     DateTime        @updatedAt @map("updated_at")
+  mantenimientos                Mantenimiento[]
+
+  @@map("equipos")
+}
+
+model Mantenimiento {
+  id                Int       @id @default(autoincrement())
+  equipoId          Int       @map("equipo_id")
+  fecha             DateTime  @default(now())
+  horometroServicio Decimal   @map("horometro_servicio") @db.Decimal(10, 2)
+  descripcion       String?   @db.Text
+  tecnico           String?   @db.VarChar(100)
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  equipo            Equipo    @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+
+  @@map("mantenimientos")
+}
+

@@ -43,39 +43,41 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Construir la API REST, la conexión a MySQL y la lógica transaccional de horómetros y mantenimientos.
 
 ### Tareas
-* [ ] Inicializar proyecto Node.js en `backend/` con TypeScript (`npm init -y`, `typescript`, `@types/node`, `tsx`).
-* [ ] Configurar `tsconfig.json` con `"strict": true`.
-* [ ] Instalar dependencias de producción: `express`, `cors`, `dotenv`, `@prisma/client`.
-* [ ] Configurar middleware de CORS en Express:
+* [x] Inicializar proyecto Node.js en `backend/` con TypeScript (`npm init -y`, `typescript`, `@types/node`, `tsx`).
+* [x] Configurar `tsconfig.json` con `"strict": true`.
+* [x] Instalar dependencias de producción: `express`, `cors`, `dotenv`, `@prisma/client`.
+* [x] Configurar middleware de CORS en Express:
   * Permitir origen parametrizado por `CORS_ORIGIN`.
   * Permitir métodos `GET, POST, PUT, DELETE, OPTIONS`.
   * Responder HTTP 204 ante peticiones preflight `OPTIONS` para compatibilidad transparente con Cloudflare Pages.
-* [ ] Configurar Prisma ORM (`npx prisma init --datasource-provider mysql`).
-* [ ] Definir el esquema relacional en `prisma/schema.prisma`:
+* [x] Configurar Prisma ORM (`npx prisma init --datasource-provider mysql`).
+* [x] Definir el esquema relacional en `prisma/schema.prisma`:
   * Modelo `Equipo` (campos: `id`, `codigo`, `tipo`, `horometro`, `horometroUltimoMantenimiento`, timestamps).
   * Modelo `Mantenimiento` (campos: `id`, `equipoId`, `fecha`, `horometroServicio`, `descripcion`, `tecnico`, timestamps).
   * Relación 1 a N con `onDelete: Cascade`.
-* [ ] Crear y ejecutar la migración inicial en la base de datos local (`npx prisma migrate dev --name init`).
-* [ ] Implementar script de sembrado de datos (`backend/prisma/seed.ts`) con 6 equipos de prueba y comando `npm run db:seed`.
-* [ ] Implementar endpoint de diagnóstico `GET /health`:
+* [x] Crear y ejecutar la migración inicial en la base de datos local (`npx prisma migrate dev --name init`).
+* [x] Implementar script de sembrado de datos (`backend/prisma/seed.ts`) con 6 equipos de prueba y comando `npm run db:seed`.
+* [x] Implementar endpoint de diagnóstico `GET /health`:
   * Ejecuta una consulta ligera a la base de datos (`prisma.$queryRaw\`SELECT 1\``).
   * Responde HTTP 200 con `{ status: "healthy", database: "connected" }` si hay conexión.
   * Responde HTTP 503 con `{ status: "unhealthy", database: "disconnected" }` si la BD no responde.
-* [ ] Implementar la capa de servicios y controladores para Equipos:
+* [x] Implementar la capa de servicios y controladores para Equipos:
   * `GET /api/equipos`: Listado con cálculo dinámico de `intervalo_mantenimiento`, `horas_en_ciclo` y `requiere_mantenimiento`.
   * `POST /api/equipos`: Creación con validaciones de código único y tipos permitidos.
   * `GET /api/equipos/:id`: Detalle de equipo e historial reciente.
   * `PUT /api/equipos/:id`: Actualización de horómetro y datos (con validación de que el horómetro no decrezca y re-evaluación inmediata de alerta si se modifica el tipo de maquinaria).
   * `DELETE /api/equipos/:id`: Eliminación física con borrado en cascada del historial.
-* [ ] Implementar la capa de Mantenimientos con transacción atómica:
+* [x] Implementar la capa de Mantenimientos con transacción atómica:
   * `POST /api/equipos/:id/mantenimientos`:
     * Ejecución en `prisma.$transaction`: inserción de registro histórico y actualización de `horometroUltimoMantenimiento = horometro`.
   * `GET /api/equipos/:id/mantenimientos`: Historial ordenado descendentemente por fecha.
-* [ ] Sugerir al usuario el mensaje de commit en español tras completar la fase.
+* [x] Implementar middleware de autenticación por API Key (`x-api-key` o Bearer) para proteger endpoints de negocio (`/api/equipos`), manteniendo `/health` público.
+* [x] Sugerir al usuario el mensaje de commit en español tras completar la fase.
 
 ### Criterio de Verificación
-* Petición `curl http://localhost:4000/health` responde HTTP 200.
-* CRUD completo funcional mediante peticiones HTTP.
+* Petición `curl http://localhost:4000/health` responde HTTP 200 sin credenciales.
+* Peticiones a `/api/equipos` sin cabecera responden HTTP 401; con cabecera `x-api-key` responden HTTP 200.
+* CRUD completo funcional mediante peticiones HTTP autenticadas.
 
 ---
 
@@ -236,7 +238,7 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 | Fase | Descripción | Estado |
 | :--- | :--- | :--- |
 | Fase 1 | Inicialización del Repositorio y Estructura Base | Completado |
-| Fase 2 | Backend y Base de Datos (Express + Prisma + MySQL) | Pendiente |
+| Fase 2 | Backend y Base de Datos (Express + Prisma + MySQL) | Completado |
 | Fase 3 | Pruebas Automatizadas (Vitest - Lógica de Dominio) | Pendiente |
 | Fase 4 | Frontend SPA (React + Vite + Tailwind) | Pendiente |
 | Fase 5 | Contenerización con Docker y Docker Compose | Pendiente |

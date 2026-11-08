@@ -52,9 +52,10 @@ Este documento establece el contrato formal de arquitectura, modelos de datos, A
   2. **Pruebas Automatizadas:** Pruebas unitarias sobre las reglas de negocio de mantenimiento y horómetros mediante Vitest (puras en memoria, sin dependencia de base de datos externa).
   3. **Rollback Automático:** Detección de fallos en `./deploy.sh` con reversión automática a la versión previa y código de salida `exit 1`.
   4. **GitHub Actions:** Pipeline `.github/workflows/ci-cd.yml` para validación de código, pruebas y despliegue continuo.
+  5. **Seguridad de Endpoints (API Key):** Protección de todas las rutas de negocio (`/api/equipos/*`) mediante cabecera `x-api-key`, conservando `/health` público para diagnósticos y balanceadores.
 
 ### 3.2 Fuera del Alcance (Out of Scope)
-* Sistemas de autenticación (JWT, OAuth2, sesiones de usuario), para preservar la simplicidad y el enfoque en el despliegue confiable.
+* Sistemas multiusuario complejos (JWT con refresh tokens, OAuth2, gestión de contraseñas de usuarios individuales), para preservar la simplicidad y el enfoque en el despliegue confiable.
 * Telemetría IoT en tiempo real o WebSockets: el horómetro se incrementa manualmente o mediante un botón de simulación de horas en la interfaz.
 * Arquitectura de microservicios distribuidos.
 
@@ -114,8 +115,19 @@ El conjunto de datos incluye 6 equipos representativos que cubren todos los esta
 * **Políticas de CORS y Handshake Preflight:**
   * El backend configura middleware `cors` utilizando la variable `CORS_ORIGIN` (ej. `https://<proyecto>.pages.dev` en producción o `http://localhost:5173` en local).
   * Métodos HTTP permitidos: `GET, POST, PUT, DELETE, OPTIONS`.
-  * Cabeceras permitidas: `Content-Type, Authorization`.
+  * Cabeceras permitidas: `Content-Type, Authorization, x-api-key`.
   * Peticiones preflight (`OPTIONS`): El servidor responde inmediatamente con código `204 No Content` para habilitar el consumo transparente desde Cloudflare Pages.
+* **Seguridad de Endpoints (Autenticación por API Key):**
+  * Todas las rutas bajo `/api/equipos` requieren la cabecera `x-api-key` (o `Authorization: Bearer <token>`) coincidente con la variable de entorno `API_KEY`.
+  * Peticiones sin la cabecera válida responden con `401 Unauthorized`:
+    ```json
+    {
+      "error": true,
+      "message": "Acceso no autorizado: la cabecera x-api-key o Authorization Bearer es inválida o está ausente",
+      "details": null
+    }
+    ```
+  * El endpoint `GET /health` se mantiene **completamente público y desprotegido** para permitir que plataformas de hosting (Railway, Render, VPS), balanceadores y scripts de health check verifiquen la salud del contenedor sin requerir credenciales.
 
 ---
 
@@ -339,6 +351,7 @@ PORT=4000
 NODE_ENV=production
 DATABASE_URL="mysql://root:password@localhost:3306/equipos_mineros"
 CORS_ORIGIN="https://equipos-mineros.pages.dev"
+API_KEY="tu_clave_secreta_aqui"
 ```
 
 ### Frontend (`frontend/.env.example`) - Variables en Build-Time
@@ -346,6 +359,7 @@ CORS_ORIGIN="https://equipos-mineros.pages.dev"
 
 ```env
 VITE_API_URL="https://backend-equipos-mineros.up.railway.app"
+VITE_API_KEY="tu_clave_secreta_aqui"
 ```
 
 ---

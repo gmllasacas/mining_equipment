@@ -55,11 +55,13 @@ PORT=4000
 NODE_ENV=development
 DATABASE_URL="mysql://root:@localhost:3306/equipos_mineros"
 CORS_ORIGIN="http://localhost:5173"
+API_KEY="mining_secret_key_2026"
 ```
 
 **Frontend (`frontend/.env`):**
 ```env
 VITE_API_URL="http://localhost:4000"
+VITE_API_KEY="mining_secret_key_2026"
 ```
 
 ### 2. Base de datos y dependencias del Backend
