@@ -124,28 +124,31 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Desarrollar la interfaz gráfica de usuario en React, moderna, intuitiva y conectada a la API.
 
 ### Tareas
-* [ ] Inicializar proyecto en `frontend/` con Vite, React y TypeScript:
-  * `npm create vite@latest frontend -- --template react-ts`
-* [ ] Instalar Tailwind CSS y Lucide Icons (o similar para iconografía limpia).
-* [ ] Configurar cliente HTTP y tipos compartidos (`frontend/src/types/`, `frontend/src/services/apiClient.ts`):
-  * Interfaces `Equipo`, `Mantenimiento`, `TipoEquipo`.
-  * Conexión parametrizada mediante variable de entorno `VITE_API_URL`.
-  * Inyección automática del encabezado `x-api-key` en todas las peticiones a la API mediante la variable de entorno `VITE_API_KEY`.
-* [ ] Desarrollar componentes de la interfaz:
-  * **Header:** Título del sistema, indicador de estado de la API (`/health`) y botón de nuevo equipo.
-  * **Panel de Resumen:** Contadores rápidos (total de equipos, equipos operativos y equipos que requieren mantenimiento urgente).
-  * **Filtros:** Por tipo de maquinaria (camión, excavadora, perforadora) y por estado de mantenimiento.
-  * **Tabla / Grid de Equipos:**
-    * Código, tipo, horómetro acumulado y barra de progreso hacia el próximo mantenimiento.
-    * Badge visual prominente: `"Requiere mantenimiento"` (resaltado en rojo/amarillo según estado).
-    * Botón de acción rápida "+50 hrs" para simular uso y disparar la alerta de mantenimiento.
-    * Botón "Registrar Mantenimiento" y "Ver Historial".
-    * Acciones de editar y eliminar.
-  * **Modal de Registro de Equipo:** Formulario validado para código, tipo y horómetro inicial.
-  * **Modal de Mantenimiento:** Formulario para registrar técnico y notas del servicio, mostrando las horas que se reiniciarán.
-  * **Modal de Historial:** Vista cronológica de mantenimientos previos del equipo.
-* [ ] Verificar compilación de producción con `npm run build` garantizando la inyección estática de `VITE_API_URL` y `VITE_API_KEY` en el bundle de `dist/`.
-* [ ] Sugerir al usuario el mensaje de commit en español tras completar la fase.
+* [x] Inicializar proyecto en `frontend/` con Vite, React y TypeScript:
+  * [x] `package.json` con React 19, Vite y TypeScript configurado.
+* [x] Instalar Tailwind CSS y Lucide Icons (`lucide-react`).
+* [x] Configurar cliente HTTP y tipos compartidos (`frontend/src/types/`, `frontend/src/services/apiClient.ts`):
+  * [x] Interfaces `Equipo`, `Mantenimiento`, `TipoEquipo`, `HealthStatus`.
+  * [x] Conexión parametrizada mediante variable de entorno `VITE_API_URL`.
+  * [x] Inyección automática del encabezado `x-api-key` en todas las peticiones a la API mediante la variable de entorno `VITE_API_KEY`.
+* [x] Desarrollar componentes de la interfaz:
+  * [x] **Header:** Barra superior con diseño Cruip Mosaic, ping interactivo en vivo al endpoint `/health` (badge de estado del backend y base de datos) y botón de nuevo equipo.
+  * [x] **Panel de Resumen:** Contadores rápidos con métricas visuales (total de equipos, equipos operativos y equipos que requieren mantenimiento urgente con indicador de alerta).
+  * [x] **Filtros y Búsqueda:** Buscador por código, filtros por tipo de maquinaria y estado operativo/alerta, con selector de vista (tabla Cruip o grid de tarjetas).
+  * [x] **Tabla / Grid de Equipos:**
+    * [x] Código, tipo, horómetro acumulado y barra de progreso hacia el próximo mantenimiento.
+    * [x] Badge visual prominente: `"Requiere mantenimiento"` (resaltado en ámbar/rojo con alerta activa).
+    * [x] Botón de acción rápida "+50 hrs" para simular uso y disparar la alerta de mantenimiento.
+    * [x] Botón "Registrar Mantenimiento" y "Ver Historial".
+    * [x] Acciones de editar y eliminar con modal dedicado de confirmación.
+  * [x] **Notificaciones Toast:** Notificaciones flotantes de alto contraste (`bg-gray-900`) con transiciones CSS fluidas (entrada/salida con desvanecimiento y escala), badges de estado (`success`, `warning`, `error`, `info`) y botón de descarte manual.
+  * [x] **Componente Base de Modales con Transiciones:** [Modal.tsx](file:///d:/laragon/www/mining_equipment/frontend/src/components/Modal.tsx) centralizado con animaciones fluidas de entrada y salida (`fade` en backdrop, `scale` y `translate` en tarjeta), bloqueo de scroll de página (`body overflow: hidden`), soporte para tecla Escape y cierre al hacer clic en el backdrop.
+  * [x] **Modal de Registro de Equipo:** Formulario validado para código, tipo y horómetro inicial/actualizado con transiciones de entrada y salida.
+  * [x] **Modal de Mantenimiento:** Formulario para registrar técnico y notas del servicio con reinicio atómico de ciclo a 0h y transiciones suaves.
+  * [x] **Modal de Historial:** Vista cronológica de mantenimientos previos del equipo con transiciones y scroll independiente.
+  * [x] **Modal de Confirmación de Eliminación:** Modal de advertencia destructiva con detalles del equipo, advertencia de eliminación en cascada y transiciones completas.
+* [x] Verificar compilación de producción con `npm run build` garantizando la inyección estática de `VITE_API_URL` y `VITE_API_KEY` en el bundle de `dist/`.
+* [x] Sugerir al usuario el mensaje de commit en español tras completar la fase.
 
 ### Criterio de Verificación
 * Interfaz funcional en navegador conectada al backend local; todas las peticiones a la API incluyen la cabecera `x-api-key` respondiendo HTTP 200 sin bloqueos 401; el flujo completo de simular horas y registrar mantenimiento actualiza la UI de inmediato.
@@ -253,7 +256,7 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 | Fase 1 | Inicialización del Repositorio y Estructura Base | Completado |
 | Fase 2 | Backend y Base de Datos (Express + Prisma + MySQL) | Completado |
 | Fase 3 | Pruebas Automatizadas (Vitest - Lógica de Dominio y Seguridad) | Completado |
-| Fase 4 | Frontend SPA (React + Vite + Tailwind) | Pendiente |
+| Fase 4 | Frontend SPA (React + Vite + Tailwind) | Completado |
 | Fase 5 | Contenerización con Docker y Docker Compose | Pendiente |
 | Fase 6 | Automatización del Despliegue (`deploy.sh` y Rollback) | Pendiente |
 | Fase 7 | Pipeline de Integración Continua (GitHub Actions) | Pendiente |
