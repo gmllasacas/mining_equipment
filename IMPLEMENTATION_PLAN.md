@@ -160,18 +160,19 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Crear un entorno autocontenido y reproducible tanto para desarrollo local como para VPS.
 
 ### Tareas
-* [ ] Crear `backend/Dockerfile` multi-stage:
-  * Builder: instala dependencias, compila TypeScript y genera cliente Prisma.
-  * Runner: imagen ligera de Node Alpine con sólo artefactos y dependencias de producción.
-* [ ] Crear `frontend/Dockerfile` multi-stage:
-  * Builder: instala dependencias y compila con Vite (`npm run build`).
-  * Server: imagen Nginx Alpine que sirve `dist/` y redirige rutas SPA (`try_files $uri /index.html`).
-* [ ] Crear `docker-compose.yml` en la raíz:
-  * Servicio `db`: MySQL 8.4 con credenciales de desarrollo, volumen persistente y `healthcheck` nativo.
-  * Servicio `backend`: depende de `db` (condición `service_healthy`), expone puerto `4000`.
-  * Servicio `frontend`: depende de `backend`, expone puerto `80`.
-* [ ] Crear `.dockerignore` en backend y frontend.
-* [ ] Sugerir al usuario el mensaje de commit en español tras completar la fase.
+* [x] Crear `backend/Dockerfile` multi-stage:
+  * [x] Builder: instala dependencias, compila TypeScript y genera cliente Prisma para arquitectura Linux musl.
+  * [x] Runner: imagen ligera de Node 22 Alpine con sólo dependencias de producción, script `entrypoint.sh` de migración automática y usuario no privilegiado (`nodejs`).
+* [x] Crear `frontend/Dockerfile` multi-stage:
+  * [x] Builder: instala dependencias y compila con Vite (`npm run build`) inyectando variables de entorno.
+  * [x] Server: imagen Nginx 1.27 Alpine que sirve `dist/`, implementa compresión Gzip, cabeceras de seguridad y enrutamiento SPA (`try_files $uri $uri/ /index.html`).
+* [x] Crear `docker-compose.yml` en la raíz:
+  * [x] Servicio `db`: MySQL 8.4 con credenciales parametrizables, volumen persistente `mining_mysql_data` y `healthcheck` nativo `mysqladmin ping`.
+  * [x] Servicio `backend`: depende de `db` (condición `service_healthy`), expone puerto `4000` y cuenta con healthcheck en `/health`.
+  * [x] Servicio `frontend`: depende de `backend` (condición `service_healthy`), expone puerto `80` con healthcheck.
+* [x] Crear `.dockerignore` en raíz, backend y frontend.
+* [x] Crear `.env.example` centralizado en la raíz del proyecto.
+* [x] Sugerir al usuario el mensaje de commit en español tras completar la fase.
 
 ### Criterio de Verificación
 * Ejecutar `docker compose up -d` levanta los tres servicios de forma coordinada y la aplicación responde en `http://localhost`.
