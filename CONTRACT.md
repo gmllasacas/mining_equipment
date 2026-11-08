@@ -128,6 +128,7 @@ El conjunto de datos incluye 6 equipos representativos que cubren todos los esta
     }
     ```
   * El endpoint `GET /health` se mantiene **completamente público y desprotegido** para permitir que plataformas de hosting (Railway, Render, VPS), balanceadores y scripts de health check verifiquen la salud del contenedor sin requerir credenciales.
+  * **Consumo desde el Frontend:** El cliente HTTP en la SPA (`frontend/src/services/apiClient.ts`) inyecta automáticamente la cabecera `x-api-key: import.meta.env.VITE_API_KEY` en todas las peticiones hacia `/api/equipos`, garantizando comunicación segura y transparente sin intervención del usuario final.
 
 ---
 
@@ -259,7 +260,18 @@ El proyecto adopta el **enfoque de lógica de dominio desacoplada**: pruebas uni
 5. **Reinicio de Ciclo:**
    * Al registrar un servicio, el cálculo actualiza la base (`horometro_ultimo_mantenimiento = horometro`), dejando `horas_en_ciclo = 0` y `requiere_mantenimiento = false`.
 
-### 6.3 Ejecución
+### 6.3 Pruebas de Seguridad y Autenticación (`backend/tests/unit/apiKeyAuth.test.ts` e integración en `tests/integration/routes.test.ts`)
+1. **Acceso Público:**
+   * `GET /health` responde HTTP 200 sin exigir cabecera `x-api-key`.
+   * Peticiones `OPTIONS` preflight responden HTTP 204 sin exigir API key.
+2. **Protección de Rutas:**
+   * Peticiones a `/api/equipos` sin cabecera son rechazadas con HTTP 401 (`error: true`).
+   * Peticiones con clave incorrecta son rechazadas con HTTP 401.
+   * Peticiones con `x-api-key` válida son aceptadas con HTTP 200.
+   * Peticiones con `Authorization: Bearer <key>` válida son aceptadas con HTTP 200.
+   * Servidor responde 500 controlado si la variable `API_KEY` no se encuentra en el entorno.
+
+### 6.4 Ejecución
 * Comando local: `npm test` en backend.
 * El script `./deploy.sh` y el workflow de GitHub Actions ejecutan esta suite de forma obligatoria antes de iniciar la compilación.
 
@@ -302,9 +314,9 @@ El script `./deploy.sh` es idempotente, cuenta con política estricta de detenci
   │      └── Ejecutar suite de pruebas (npm test en backend). Si falla -> ROLLBACK
   │
   ├── 4. Compilación y Construcción (Build):
-  │      ├── Validar e inyectar VITE_API_URL en el entorno de compilación
+  │      ├── Validar e inyectar VITE_API_URL y VITE_API_KEY en el entorno de compilación
   │      ├── Compilar backend (TypeScript -> JS ejecutable)
-  │      └── Compilar frontend (Vite build empaqueta VITE_API_URL en los estáticos de dist/)
+  │      └── Compilar frontend (Vite build empaqueta VITE_API_URL y VITE_API_KEY en los estáticos de dist/)
   │
   ├── 5. Migraciones de Base de Datos:
   │      └── Ejecutar migraciones con Prisma (prisma migrate deploy)
@@ -314,7 +326,8 @@ El script `./deploy.sh` es idempotente, cuenta con política estricta de detenci
   │      └── Desplegar Frontend compilado a Cloudflare Pages (wrangler pages deploy)
   │
   └── 7. Smoke Test & Health Check:
-         ├── curl -sf https://<backend-url>/health (debe responder HTTP 200)
+         ├── curl -sf https://<backend-url>/health (debe responder HTTP 200 sin clave)
+         ├── curl -sf -H "x-api-key: $API_KEY" https://<backend-url>/api/equipos (debe responder HTTP 200 con clave)
          ├── curl -sf https://<frontend-url>/ (debe responder HTTP 200)
          └── Si falla cualquier verificación -> Ejecutar función ROLLBACK
 
@@ -338,8 +351,8 @@ El repositorio incluirá el archivo `.github/workflows/ci-cd.yml` estructurado c
    * Corre la suite completa de pruebas unitarias y de integración (`npm test`).
 2. **Job `deploy`:**
    * Se ejecuta únicamente si el job de pruebas concluye exitosamente en `main`.
-   * Despliega el backend a Railway y el frontend a Cloudflare Pages mediante sus respectivos tokens seguros en GitHub Secrets.
-   * Ejecuta la comprobación final contra la URL pública de `/health`.
+   * Despliega el backend a Railway y el frontend a Cloudflare Pages mediante sus respectivos tokens seguros en GitHub Secrets (incluyendo `API_KEY` y `VITE_API_KEY`).
+   * Ejecuta la comprobación final contra la URL pública de `/health` y el endpoint protegido `/api/equipos`.
 
 ---
 
