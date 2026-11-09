@@ -140,7 +140,8 @@ export function App() {
   useEffect(() => {
     fetchEquipos();
     checkHealth(false);
-    const interval = setInterval(() => checkHealth(false), 30000);
+    // Verificación automática periódica del endpoint /health cada 10 minutos
+    const interval = setInterval(() => checkHealth(false), 600000);
     return () => clearInterval(interval);
   }, [fetchEquipos, checkHealth]);
 
