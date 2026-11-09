@@ -20,8 +20,8 @@ Este documento establece el contrato formal de arquitectura, modelos de datos, A
 | **ORM / Migraciones** | Prisma ORM | Migraciones declarativas, idempotentes y cliente tipado end-to-end. |
 | **Base de Datos** | MySQL 8.4 | Motor relacional con integridad referencial y soporte de transacciones ACID. |
 | **Frontend** | React 19, Vite, TypeScript, Tailwind CSS | SPA ultraligera, compilación instantánea y diseño responsivo sin sobrecarga SSR. |
-| **Hosting Frontend** | Cloudflare Pages | Alojamiento en red perimetral (Edge CDN), ancho de banda ilimitado y 100% libre de costo. |
-| **Hosting Backend y BD** | Railway / VPS Linux | Servicio de cómputo para Node.js y MySQL con URL pública independiente. |
+| **Hosting Frontend** | Railway (Nginx) | Alojamiento en contenedor Nginx multi-stage independiente con su propia URL pública HTTPS. |
+| **Hosting Backend y BD** | Railway / VPS Linux | Servicios de cómputo para Node.js y MySQL con URL pública independiente. |
 | **Pruebas** | Vitest | Pruebas unitarias de lógica de dominio desacoplada (puras en memoria, ejecución instantánea y sin dependencias de base de datos). |
 | **Contenerización** | Docker + Docker Compose | Entorno de ejecución reproducible para desarrollo local y despliegue en servidor. |
 | **CI / CD** | GitHub Actions | Pipeline de validación de código, pruebas automáticas y orquestación de despliegue. |
@@ -113,10 +113,10 @@ El conjunto de datos incluye 6 equipos representativos que cubren todos los esta
   }
   ```
 * **Políticas de CORS y Handshake Preflight:**
-  * El backend configura middleware `cors` utilizando la variable `CORS_ORIGIN` (ej. `https://<proyecto>.pages.dev` en producción o `http://localhost:5173` en local).
+  * El backend configura middleware `cors` utilizando la variable `CORS_ORIGIN` (ej. `https://<frontend-production>.up.railway.app` en producción o `http://localhost:5173` en local).
   * Métodos HTTP permitidos: `GET, POST, PUT, DELETE, OPTIONS`.
   * Cabeceras permitidas: `Content-Type, Authorization, x-api-key`.
-  * Peticiones preflight (`OPTIONS`): El servidor responde inmediatamente con código `204 No Content` para habilitar el consumo transparente desde Cloudflare Pages.
+  * Peticiones preflight (`OPTIONS`): El servidor responde inmediatamente con código `204 No Content` para habilitar el consumo transparente entre dominios (CORS) desde el frontend.
 * **Seguridad de Endpoints (Autenticación por API Key):**
   * Todas las rutas bajo `/api/equipos` requieren la cabecera `x-api-key` (o `Authorization: Bearer <token>`) coincidente con la variable de entorno `API_KEY`.
   * Peticiones sin la cabecera válida responden con `401 Unauthorized`:
@@ -305,7 +305,7 @@ El script `./deploy.sh` es idempotente, cuenta con política estricta de detenci
   │
   ├── 1. Pre-flight Check:
   │      ├── Validar variables de entorno (.env backend y frontend)
-  │      └── Validar herramientas (node/npm, wrangler o railway CLI, git, curl)
+  │      └── Validar herramientas (node/npm, docker, git, curl)
   │
   ├── 2. Registro de Estado Previo (Para Rollback):
   │      └── Guardar versión o commit anterior: PREV_STATE=$(git rev-parse HEAD)
@@ -321,9 +321,9 @@ El script `./deploy.sh` es idempotente, cuenta con política estricta de detenci
   ├── 5. Migraciones de Base de Datos:
   │      └── Ejecutar migraciones con Prisma (prisma migrate deploy)
   │
-  ├── 6. Despliegue Híbrido de Servicios:
-  │      ├── Desplegar Backend a Railway / VPS
-  │      └── Desplegar Frontend compilado a Cloudflare Pages (wrangler pages deploy)
+  ├── 6. Despliegue de Servicios en Producción:
+  │      ├── Desplegar Backend a Railway / VPS (railway up --service backend)
+  │      └── Desplegar Frontend Nginx a Railway / VPS (railway up --service frontend)
   │
   └── 7. Smoke Test & Health Check:
          ├── curl -sf https://<backend-url>/health (debe responder HTTP 200 sin clave)
@@ -349,9 +349,12 @@ El repositorio incluirá el archivo `.github/workflows/ci-cd.yml` estructurado c
    * Levanta un servicio MySQL efímero.
    * Ejecuta verificación de tipos TypeScript (`tsc --noEmit`).
    * Corre la suite completa de pruebas unitarias y de integración (`npm test`).
-2. **Job `deploy`:**
-   * Se ejecuta únicamente si el job de pruebas concluye exitosamente en `main`.
-   * Despliega el backend a Railway y el frontend a Cloudflare Pages mediante sus respectivos tokens seguros en GitHub Secrets (incluyendo `API_KEY` y `VITE_API_KEY`).
+2. **Job `docker-verification`:**
+   * Construye las imágenes Docker con Buildx y levanta los servicios coordinados.
+   * Ejecuta pruebas de humo (smoke tests) verificando `/health`, autenticación y frontend.
+3. **Job `deploy`:**
+   * Se ejecuta únicamente si los jobs de pruebas concluyen exitosamente en `main`.
+   * Despliega los servicios de backend y frontend a Railway en contenedores independientes con URLs públicas propias mediante `RAILWAY_TOKEN` en GitHub Secrets.
    * Ejecuta la comprobación final contra la URL pública de `/health` y el endpoint protegido `/api/equipos`.
 
 ---
@@ -363,15 +366,15 @@ El repositorio incluirá el archivo `.github/workflows/ci-cd.yml` estructurado c
 PORT=4000
 NODE_ENV=production
 DATABASE_URL="mysql://root:password@localhost:3306/equipos_mineros"
-CORS_ORIGIN="https://equipos-mineros.pages.dev"
+CORS_ORIGIN="https://mining-frontend.up.railway.app"
 API_KEY="tu_clave_secreta_aqui"
 ```
 
 ### Frontend (`frontend/.env.example`) - Variables en Build-Time
-> **Nota de Arquitectura:** En aplicaciones SPA con Vite, las variables con prefijo `VITE_` se sustituyen estáticamente durante el proceso de compilación (`npm run build`). Deben estar presentes en el entorno antes de compilar para empaquetarse en los archivos estáticos que se subirán a Cloudflare Pages.
+> **Nota de Arquitectura:** En aplicaciones SPA con Vite, las variables con prefijo `VITE_` se sustituyen estáticamente durante el proceso de compilación (`npm run build`). Deben estar presentes en el entorno antes de compilar para empaquetarse en los archivos estáticos servidos por el contenedor Nginx en Railway.
 
 ```env
-VITE_API_URL="https://backend-equipos-mineros.up.railway.app"
+VITE_API_URL="https://mining-backend.up.railway.app"
 VITE_API_KEY="tu_clave_secreta_aqui"
 ```
 

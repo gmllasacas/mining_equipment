@@ -36,9 +36,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-# Healthcheck de disponibilidad web
+# Healthcheck de disponibilidad web (soporta puerto dinámico PORT de Railway o 80 por defecto)
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:80/ || exit 1
+  CMD curl -f http://localhost:${PORT:-80}/ || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+# Soporta $PORT dinámico inyectado por Railway o 80 por defecto
+CMD ["/bin/sh", "-c", "sed -i 's/listen 80;/listen '\"${PORT:-80}\"';/g' /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
 

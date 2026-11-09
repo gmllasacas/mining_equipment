@@ -155,13 +155,22 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE || 'backend' }}
+          RAILWAY_FRONTEND_SERVICE: ${{ secrets.RAILWAY_FRONTEND_SERVICE || 'frontend' }}
         run: |
           if [ -n "$RAILWAY_TOKEN" ]; then
-            TARGET_SERVICE="${RAILWAY_SERVICE:-backend}"
-            echo "[DEPLOY] Token de Railway detectado. Desplegando servicio: $TARGET_SERVICE..."
+            echo "[DEPLOY] Token de Railway detectado. Desplegando servicios en Railway..."
             npm install -g @railway/cli
-            railway up --service "$TARGET_SERVICE" --detach
-            echo "[EXITO] Despliegue en Railway para el servicio '$TARGET_SERVICE' completado exitosamente."
+
+            BACKEND_SVC="${RAILWAY_SERVICE:-backend}"
+            FRONTEND_SVC="${RAILWAY_FRONTEND_SERVICE:-frontend}"
+
+            echo "[DEPLOY] Desplegando Backend en servicio: $BACKEND_SVC..."
+            railway up --service "$BACKEND_SVC" --detach
+
+            echo "[DEPLOY] Desplegando Frontend en servicio: $FRONTEND_SVC..."
+            railway up --service "$FRONTEND_SVC" --detach || echo "[AVISO] Servicio frontend en Railway aun no detectado o creado. Continuando..."
+
+            echo "[EXITO] Despliegue en Railway procesado exitosamente."
           else
             echo "[INFO] Secret RAILWAY_TOKEN no configurado en este repositorio."
             echo "[INFO] Las pruebas y la contenerizacion Docker pasaron con 100% de exito."

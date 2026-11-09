@@ -49,7 +49,7 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * [x] Configurar middleware de CORS en Express:
   * Permitir origen parametrizado por `CORS_ORIGIN`.
   * Permitir métodos `GET, POST, PUT, DELETE, OPTIONS`.
-  * Responder HTTP 204 ante peticiones preflight `OPTIONS` para compatibilidad transparente con Cloudflare Pages.
+  * Responder HTTP 204 ante peticiones preflight `OPTIONS` para compatibilidad transparente de CORS entre el frontend y backend.
 * [x] Configurar Prisma ORM (`npx prisma init --datasource-provider mysql`).
 * [x] Definir el esquema relacional en `prisma/schema.prisma`:
   * Modelo `Equipo` (campos: `id`, `codigo`, `tipo`, `horometro`, `horometroUltimoMantenimiento`, timestamps).
