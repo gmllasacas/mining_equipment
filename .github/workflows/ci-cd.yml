@@ -10,10 +10,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test-and-build:
     name: Pruebas Automatizadas y Compilacion
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       mysql:
@@ -93,7 +96,7 @@ jobs:
 
   docker-verification:
     name: Verificacion de Contenedores Docker Compose
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test-and-build
 
     steps:
@@ -143,7 +146,7 @@ jobs:
 
   deploy:
     name: Despliegue Automatizado a Produccion
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test-and-build, docker-verification]
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
 

@@ -344,11 +344,12 @@ El script `./deploy.sh` es idempotente, cuenta con política estricta de detenci
 
 El repositorio incluirá el archivo `.github/workflows/ci-cd.yml` estructurado con:
 
-1. **Job `validate-and-test`:**
+1. **Job `test-and-build`:**
    * Se ejecuta en cada `push` y `pull_request` a la rama `main`.
    * Levanta un servicio MySQL efímero.
-   * Ejecuta verificación de tipos TypeScript (`tsc --noEmit`).
-   * Corre la suite completa de pruebas unitarias y de integración (`npm test`).
+   * Ejecuta verificación y compilación de TypeScript (`npm run build`).
+   * Corre la suite completa de 28 pruebas unitarias y de integración (`npm test` con Vitest).
+   * Compila el frontend SPA con Vite y preserva artefactos de producción (`dist/`).
 2. **Job `docker-verification`:**
    * Construye las imágenes Docker con Buildx y levanta los servicios coordinados.
    * Ejecuta pruebas de humo (smoke tests) verificando `/health`, autenticación y frontend.
@@ -368,6 +369,7 @@ NODE_ENV=production
 DATABASE_URL="mysql://root:password@localhost:3306/equipos_mineros"
 CORS_ORIGIN="https://mining-frontend.up.railway.app"
 API_KEY="tu_clave_secreta_aqui"
+RUN_SEED=false
 ```
 
 ### Frontend (`frontend/.env.example`) - Variables en Build-Time

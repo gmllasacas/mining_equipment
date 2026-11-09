@@ -247,15 +247,15 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Validar el cumplimiento del 100% de los requisitos y finalizar la entrega.
 
 ### Tareas
-* [ ] Revisar checklist contra `BASE_INSTRUCTIONS.md`:
-  * [ ] Frontend y backend separados con URLs públicas propias.
-  * [ ] Endpoint `GET /health` responde correctamente.
-  * [ ] Base de datos relacional con migraciones.
-  * [ ] Sin secretos en el repositorio (`.env.example` incluidos).
-  * [ ] `./deploy.sh` automatiza las 5 etapas y maneja código de error.
-  * [ ] Opcionales cumplidos: Rollback, Docker, GitHub Actions, Pruebas automatizadas.
-  * [ ] `README.md` completo y con sección de herramientas de IA.
-* [ ] Sugerir al usuario el mensaje de commit y versión en español tras completar la fase.
+* [x] Revisar checklist contra `BASE_INSTRUCTIONS.md`:
+  * [x] Frontend y backend separados con URLs públicas propias.
+  * [x] Endpoint `GET /health` responde correctamente.
+  * [x] Base de datos relacional con migraciones.
+  * [x] Sin secretos en el repositorio (`.env.example` incluidos).
+  * [x] `./deploy.sh` automatiza las 5 etapas y maneja código de error.
+  * [x] Opcionales cumplidos: Rollback, Docker, GitHub Actions, Pruebas automatizadas.
+  * [x] `README.md` completo y con sección de herramientas de IA.
+* [x] Sugerir al usuario el mensaje de commit y versión en español tras completar la fase.
 
 ---
 
@@ -270,5 +270,5 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 | Fase 5 | Contenerización con Docker y Docker Compose | Completado |
 | Fase 6 | Automatización del Despliegue (`deploy.sh` y Rollback) | Completado |
 | Fase 7 | Pipeline de Integración Continua (GitHub Actions) | Completado |
-| Fase 8 | Verificación de Aceptación y Despliegue Final | Pendiente |
+| Fase 8 | Verificación de Aceptación y Despliegue Final | Completado |
 

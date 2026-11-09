@@ -56,6 +56,7 @@ NODE_ENV=development
 DATABASE_URL="mysql://root:@localhost:3306/equipos_mineros"
 CORS_ORIGIN="http://localhost:5173"
 API_KEY="mining_secret_key_2026"
+RUN_SEED=false
 ```
 
 **Frontend (`frontend/.env`):**
@@ -102,6 +103,27 @@ npm test
 ```
 
 La conectividad con la base de datos real se valida automáticamente durante el despliegue con el Smoke Test de `GET /health`.
+
+---
+
+## Sembrado de Datos y Persistencia (`RUN_SEED`)
+
+La variable de entorno `RUN_SEED` controla la carga inicial de los 6 equipos de prueba del contrato en la base de datos MySQL:
+
+* **`RUN_SEED=false` (Valor por defecto y recomendado):**
+  * Protege la integridad de la base de datos.
+  * Los despliegues (`./deploy.sh`, `make deploy` o GitHub Actions) únicamente ejecutan `prisma migrate deploy`, aplicando cambios de esquema sin borrar ni alterar registros existentes.
+  * Garantiza que los nuevos equipos creados y los mantenimientos registrados no se pierdan en futuras actualizaciones.
+* **`RUN_SEED=true` (Uso único inicial):**
+  * Si la base de datos en producción o local está vacía y deseas precargar los 6 equipos de prueba, puedes definir `RUN_SEED=true` durante el primer arranque.
+  * **Importante:** Una vez concluido el primer despliegue con éxito, debes volver a configurarlo en `RUN_SEED=false` (o eliminar la variable) para evitar que el script de sembrado limpie y reinicie las tablas en despliegues posteriores.
+* **Sembrado manual bajo demanda:**
+  * Puedes ejecutar el sembrado en cualquier momento sin alterar variables de entorno mediante:
+    ```bash
+    make seed
+    # o directamente con Docker:
+    docker compose exec backend npx prisma db seed
+    ```
 
 ---
 

@@ -42,6 +42,7 @@ services:
       DATABASE_URL: mysql://${DB_USER:-mining_user}:${DB_PASSWORD:-mining_pass_2026}@db:3306/${DB_NAME:-equipos_mineros}
       API_KEY: ${API_KEY:-mining_secret_key_2026}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://localhost:80,http://localhost:5173}
+      RUN_SEED: ${RUN_SEED:-false}
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     healthcheck:
