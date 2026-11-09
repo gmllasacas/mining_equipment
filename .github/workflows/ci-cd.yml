@@ -1,0 +1,170 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Pruebas Automatizadas y Compilacion
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: equipos_mineros
+          MYSQL_USER: mining_user
+          MYSQL_PASSWORD: mining_pass_2026
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+
+    steps:
+      - name: Descargar codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # Backend: Instalacion, Migraciones, Compilacion y Pruebas
+      - name: Instalar dependencias del Backend
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generar cliente de Prisma
+        working-directory: ./backend
+        run: npx prisma generate
+
+      - name: Aplicar migraciones en MySQL de CI
+        working-directory: ./backend
+        env:
+          DATABASE_URL: mysql://mining_user:mining_pass_2026@127.0.0.1:3306/equipos_mineros
+        run: npx prisma migrate deploy
+
+      - name: Sembrado de datos en BD de prueba
+        working-directory: ./backend
+        env:
+          DATABASE_URL: mysql://mining_user:mining_pass_2026@127.0.0.1:3306/equipos_mineros
+        run: npx prisma db seed
+
+      - name: Compilar Backend (TypeScript)
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Ejecutar suite de pruebas (Vitest - Unitarias, Seguridad e Integracion)
+        working-directory: ./backend
+        env:
+          DATABASE_URL: mysql://mining_user:mining_pass_2026@127.0.0.1:3306/equipos_mineros
+          API_KEY: mining_secret_key_2026
+        run: npm test
+
+      # Frontend: Instalacion y Compilacion
+      - name: Instalar dependencias del Frontend
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Compilar Frontend SPA (Vite + TypeScript)
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: http://localhost:4000
+          VITE_API_KEY: mining_secret_key_2026
+        run: npm run build
+
+      - name: Guardar artefactos compilados del Frontend
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  docker-verification:
+    name: Verificacion de Contenedores Docker Compose
+    runs-on: ubuntu-latest
+    needs: test-and-build
+
+    steps:
+      - name: Descargar codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Preparar variables de entorno
+        run: cp .env.example .env
+
+      - name: Construir y levantar contenedores con Docker Compose
+        run: docker compose up -d --build
+
+      - name: Esperar a que los servicios esten saludables
+        run: |
+          echo "Esperando que los servicios alcancen estado healthy..."
+          timeout 60 bash -c 'until docker compose ps | grep -q "(healthy)"; do sleep 2; done'
+          docker compose ps
+
+      - name: Ejecutar sembrado de datos dentro del contenedor Backend
+        run: docker compose exec -T backend npx prisma db seed
+
+      - name: Smoke Test - Verificar /health del Backend
+        run: |
+          response=$(curl -s -f http://localhost:4000/health)
+          echo "Respuesta /health: $response"
+          echo "$response" | grep -q '"status":"healthy"'
+
+      - name: Smoke Test - Verificar /api/equipos con API Key
+        run: |
+          curl -s -f -H "x-api-key: mining_secret_key_2026" http://localhost:4000/api/equipos
+
+      - name: Smoke Test - Verificar rechazo 401 sin API Key
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/equipos)
+          test "$status" -eq 401
+
+      - name: Smoke Test - Verificar Frontend Web Nginx
+        run: |
+          curl -s -f http://localhost:80/
+
+      - name: Detener contenedores
+        if: always()
+        run: docker compose down -v
+
+  deploy:
+    name: Despliegue Automatizado a Produccion
+    runs-on: ubuntu-latest
+    needs: [test-and-build, docker-verification]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+
+    steps:
+      - name: Descargar codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Desplegar en Railway (Si se encuentra configurado el Token)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -n "$RAILWAY_TOKEN" ]; then
+            echo "[DEPLOY] Token de Railway detectado. Desplegando servicios..."
+            npm install -g @railway/cli
+            railway up --detach
+            echo "[EXITO] Despliegue en Railway enviado exitosamente."
+          else
+            echo "[INFO] Secret RAILWAY_TOKEN no configurado en este repositorio."
+            echo "[INFO] Las pruebas y la contenerizacion Docker pasaron con 100% de exito."
+            echo "[INFO] Para activar el despliegue automatico continuo a Railway:"
+            echo "       1. Ve a Configuracion de tu repositorio en GitHub > Secrets and variables > Actions."
+            echo "       2. Agrega el Secret RAILWAY_TOKEN obtenido desde tu cuenta de Railway."
+          fi
+

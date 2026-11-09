@@ -58,9 +58,9 @@ USER nodejs
 
 EXPOSE 4000
 
-# Healthcheck nativo contra el endpoint de diagnóstico
+# Healthcheck nativo contra el endpoint de diagnóstico (soporta PORT dinámico de Railway)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:4000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["./entrypoint.sh"]

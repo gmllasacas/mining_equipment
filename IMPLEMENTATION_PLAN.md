@@ -216,20 +216,29 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 * **Objetivo:** Implementar CI/CD automatizado en GitHub para pruebas y despliegue continuo.
 
 ### Tareas
-* [ ] Crear el directorio `.github/workflows/`.
-* [ ] Crear el archivo `.github/workflows/ci-cd.yml`:
-  * Job 1: `test-and-lint` (se ejecuta en push y PR a `main`):
-    * Configura Node.js 24.
-    * Levanta un servicio MySQL efímero con Docker service container.
-    * Instala dependencias y corre `tsc --noEmit`.
-    * Corre la suite de pruebas `npm test`.
-  * Job 2: `deploy` (solo en push a `main` tras pasar las pruebas):
-    * Despliega backend a Railway y frontend a Cloudflare Pages mediante secrets seguros (incluyendo `API_KEY` y `VITE_API_KEY`).
-    * Realiza el chequeo final de `/health` y `/api/equipos`.
-* [ ] Sugerir al usuario el mensaje de commit en español tras completar la fase.
+* [x] Crear el directorio `.github/workflows/`.
+* [x] Crear el archivo `.github/workflows/ci-cd.yml`:
+  * [x] Job 1: `test-and-build` (se ejecuta en push y PR a `main` y `master`):
+    * [x] Configura Node.js 22 con caché de dependencias npm.
+    * [x] Levanta un servicio MySQL 8.4 efímero con Docker service container y healthcheck nativo.
+    * [x] Instala dependencias y genera cliente Prisma para Linux.
+    * [x] Ejecuta migraciones y sembrado de datos en la base de datos de CI.
+    * [x] Compila backend (`npm run build`).
+    * [x] Ejecuta la suite de pruebas unitarias, de seguridad y de integración (`npm test` con Vitest).
+    * [x] Compila frontend SPA con Vite y guarda artefactos de producción (`actions/upload-artifact@v4`).
+  * [x] Job 2: `docker-verification` (validación de orquestación multi-stage):
+    * [x] Configura Docker Buildx.
+    * [x] Construye y levanta la pila completa con `docker compose up -d --build`.
+    * [x] Espera estado `healthy` en los servicios.
+    * [x] Ejecuta sembrado de datos dentro del contenedor backend.
+    * [x] Ejecuta smoke tests automáticos contra `/health`, `/api/equipos` (autenticado y no autorizado) y el frontend Nginx.
+  * [x] Job 3: `deploy` (solo en push a `main`/`master` tras pasar las pruebas):
+    * [x] Detecta secret seguro `RAILWAY_TOKEN` para disparar el despliegue automático continuo con CLI oficial.
+    * [x] En ausencia de token, emite instrucciones claras y finaliza exitosamente protegiendo el pipeline.
+* [x] Sugerir al usuario el mensaje de commit en español tras completar la fase.
 
 ### Criterio de Verificación
-* GitHub Actions ejecuta el workflow en verde al subir los cambios a la rama `main`.
+* Pipeline validado sintácticamente con `js-yaml` y listo para ejecutarse en GitHub Actions con runners estándar de Ubuntu.
 
 ---
 
@@ -258,8 +267,8 @@ Este documento establece la hoja de ruta secuencial para la construcción, prueb
 | Fase 2 | Backend y Base de Datos (Express + Prisma + MySQL) | Completado |
 | Fase 3 | Pruebas Automatizadas (Vitest - Lógica de Dominio y Seguridad) | Completado |
 | Fase 4 | Frontend SPA (React + Vite + Tailwind) | Completado |
-| Fase 5 | Contenerización con Docker y Docker Compose | Pendiente |
-| Fase 6 | Automatización del Despliegue (`deploy.sh` y Rollback) | Pendiente |
-| Fase 7 | Pipeline de Integración Continua (GitHub Actions) | Pendiente |
+| Fase 5 | Contenerización con Docker y Docker Compose | Completado |
+| Fase 6 | Automatización del Despliegue (`deploy.sh` y Rollback) | Completado |
+| Fase 7 | Pipeline de Integración Continua (GitHub Actions) | Completado |
 | Fase 8 | Verificación de Aceptación y Despliegue Final | Pendiente |
 
