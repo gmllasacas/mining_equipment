@@ -20,6 +20,7 @@ export function formatearEquipo(equipo: Equipo) {
     horometro_ultimo_mantenimiento: horometroUltimoMantenimientoNum,
     intervalo_mantenimiento: intervalo,
     horas_en_ciclo: horasEnCiclo,
+    alerta_preventiva: horasEnCiclo >= intervalo * 0.8 && !requiereMantenimiento,
     requiere_mantenimiento: requiereMantenimiento,
     created_at: equipo.createdAt.toISOString(),
     updated_at: equipo.updatedAt.toISOString(),

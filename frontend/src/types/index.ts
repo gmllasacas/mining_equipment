@@ -9,6 +9,7 @@ export interface Equipo {
   intervalo_mantenimiento: number;
   horas_en_ciclo: number;
   requiere_mantenimiento: boolean;
+  alerta_preventiva?: boolean;
   created_at: string;
   updated_at: string;
 }

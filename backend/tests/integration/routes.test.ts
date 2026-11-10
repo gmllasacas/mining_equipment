@@ -63,6 +63,7 @@ describe('Pruebas de Integración HTTP (Endpoints y Middleware)', () => {
       expect(primerEquipo).toHaveProperty('horometro');
       expect(primerEquipo).toHaveProperty('horas_en_ciclo');
       expect(primerEquipo).toHaveProperty('requiere_mantenimiento');
+      expect(primerEquipo).toHaveProperty('alerta_preventiva');
     });
 
     it('debe responder HTTP 200 cuando se envía Authorization Bearer correcta', async () => {
