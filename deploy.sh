@@ -136,6 +136,9 @@ HOST_DB_PORT="${HOST_DB_PORT:-3306}"
 # ==============================================================================
 log_step "2. Pruebas Automatizadas: Validando logica de negocio y contratos"
 
+log_info "Asegurando disponibilidad de MySQL para pruebas de integracion..."
+docker compose up -d db
+
 log_info "Ejecutando suite de pruebas unitarias y de integracion en backend (Vitest)..."
 (
     cd backend
